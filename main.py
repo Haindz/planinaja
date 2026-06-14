@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import numpy as np
+import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -22,14 +23,16 @@ app.add_middleware(
 tourism_id = None
 cosine_sim = None
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # 1. Mount folder 'assets' agar gambar JPG bisa dibaca browser
-app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+app.mount("/assets", StaticFiles(directory=os.path.join(BASE_DIR, "assets")), name="assets")
 
 # 2. Mount folder utama (titik '.') agar style.css bisa dibaca
-app.mount("/static", StaticFiles(directory="."), name="static")
+app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
 # 3. Setup Jinja2 (Membaca folder utama karena 'templates' dan 'partisi' terpisah)
-templates = Jinja2Templates(directory=".")
+templates = Jinja2Templates(directory=BASE_DIR)
 
 # 4. Update Path Dataset ke folder 'datasets'
 tourism_id = pd.read_csv('datasets/tourism_with_id.csv')
@@ -38,8 +41,8 @@ tourism_id = pd.read_csv('datasets/tourism_with_id.csv')
 print("Memuat dataset dan merakit algoritma... Mohon tunggu.")
 
 # 1. Load Data
-t_id = pd.read_csv('datasets/tourism_with_id.csv')
-rating = pd.read_csv('datasets/tourism_rating.csv')
+t_id = pd.read_csv(os.path.join(BASE_DIR, 'datasets', 'tourism_with_id.csv'))
+rating = pd.read_csv(os.path.join(BASE_DIR, 'datasets', 'tourism_rating.csv'))
 
 # 2. Data Cleaning
 t_id = t_id.drop(['Unnamed: 11', 'Unnamed: 12'], axis=1, errors='ignore')
