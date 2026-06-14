@@ -1,0 +1,166 @@
+/* --- ATURAN TEMA GLOBAL --- */
+:root {
+    --bg-cream: #F8F6F0;
+    --text-brown: #4A3B32;
+    --accent-blue: #EAF2F4;
+}
+
+body {
+    background-color: var(--bg-cream);
+    color: var(--text-brown);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, .serif-font {
+    font-family: 'Playfair Display', serif;
+    color: var(--text-brown);
+}
+
+/* --- NAVBAR KUSTOM --- */
+.navbar {
+    background-color: var(--accent-blue);
+    padding: 15px 50px;
+}
+.navbar-brand {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    color: black !important;
+}
+.nav-link {
+    color: black !important;
+    font-size: 0.9rem;
+    margin-left: 20px;
+}
+
+/* --- HERO SECTION --- */
+.hero-container {
+    display: flex;
+    height: 90vh;
+}
+.hero-text-side {
+    background-color: var(--bg-cream);
+    width: 40%;
+    padding: 8% 5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.hero-title {
+    font-size: 4.5rem;
+    line-height: 1.1;
+    margin-bottom: 2rem;
+}
+.hero-image-side {
+    width: 60%;
+    background-image: url('https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80');
+    background-size: cover;
+    background-position: center;
+}
+.btn-custom-link {
+    color: var(--text-brown);
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    font-weight: 600;
+    margin-top: 10px;
+    display: inline-block;
+    transition: 0.3s;
+    cursor: pointer;
+}
+.btn-custom-link:hover { color: #000; }
+
+/* --- SECTION WISATA POPULER --- */
+.section-popular {
+    padding: 80px 50px;
+    background-color: var(--accent-blue);
+}
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 50px;
+}
+.section-title { font-size: 3.5rem; line-height: 1.1; margin: 0; }
+.section-subtitle { max-width: 300px; font-size: 0.95rem; margin: 0; text-align: right; }
+
+.destination-card {
+    position: relative;
+    width: 100%;
+    height: 550px;
+    margin-bottom: 60px;
+}
+.destination-img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+.destination-info-box {
+    position: absolute;
+    top: 50px; right: 50px;
+    background-color: var(--bg-cream);
+    padding: 40px;
+    width: 400px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+.destination-info-box.left { right: auto; left: 50px; }
+.destination-title { font-size: 2.2rem; margin-bottom: 15px; line-height: 1.2; }
+
+/* --- FOOTER SECTION --- */
+.footer-section {
+    background-color: var(--accent-blue); /* Warna biru muda sesuai gambar */
+    color: var(--text-brown);
+    padding: 80px 50px 40px;
+    font-size: 0.9rem;
+}
+.footer-brand {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 1.05rem;
+}
+.footer-text p {
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+.footer-links ul li {
+    margin-bottom: 6px;
+}
+.footer-links a {
+    color: var(--text-brown);
+    text-decoration: none;
+    transition: 0.3s;
+}
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN (MOBILE LAYOUT)
+========================================= */
+@media (max-width: 768px) {
+    /* Navbar penyesuaian padding HP */
+    .navbar { padding: 15px 20px; }
+    
+    /* Hero section jadi numpuk atas-bawah */
+    .hero-container { flex-direction: column; height: auto; }
+    .hero-text-side { width: 100%; padding: 15% 20px; }
+    .hero-title { font-size: 3rem; }
+    .hero-image-side { width: 100%; height: 40vh; }
+
+    /* Popular section padding & header text */
+    .section-popular, .section-approach { padding: 50px 20px; }
+    .section-header { flex-direction: column; align-items: flex-start; }
+    .section-subtitle { text-align: left; margin-top: 15px; }
+
+    /* Kotak info wisata yang tadinya nabrak, kita rapikan ke tengah */
+    .destination-info-box, .destination-info-box.left {
+        position: relative;
+        top: auto; right: auto; left: auto;
+        width: 90%;
+        margin: -50px auto 0; /* Sedikit menumpuk gambar dari bawah */
+        padding: 25px;
+    }
+    .destination-card { height: auto; margin-bottom: 40px; }
+    .destination-img { height: 300px; }
+
+    /* Tambahan Responsivitas untuk Footer di HP */
+    .footer-section { padding: 50px 20px 20px; }
+    .footer-section .col-md-6 { margin-bottom: 30px !important; }
+}

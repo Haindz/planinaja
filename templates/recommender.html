@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Your Journey - Planinaja</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+        /* Desain Split Screen (Kiri Form, Kanan Hasil) */
+        body {
+            overflow-x: hidden;
+            /* Mencegah scroll menyamping */
+        }
+
+        .split-container {
+            display: flex;
+            min-height: calc(100vh - 70px);
+            /* Tinggi layar dikurangi tinggi navbar */
+            align-items: stretch;
+            /* Memaksa kedua kolom sama tinggi */
+        }
+
+        /* --- SISI KIRI (FORM INPUT) --- */
+        .form-side {
+            width: 35%;
+            background-color: var(--bg-cream);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .form-side h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+            color: var(--text-brown);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-brown);
+            font-size: 0.9rem;
+            margin-top: 15px;
+        }
+
+        .form-control,
+        .form-select {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px 15px;
+            background-color: transparent;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--text-brown);
+            box-shadow: none;
+            background-color: white;
+        }
+
+        .btn-custom {
+            background-color: var(--text-brown);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 30px;
+            transition: 0.3s;
+        }
+
+        .btn-custom:hover {
+            background-color: #2b221d;
+            color: white;
+        }
+
+        /* --- SISI KANAN (HASIL ITINERARY & GAMBAR) --- */
+        .result-side {
+            width: 65%;
+            /* GANTI URL DI BAWAH INI DENGAN GAMBAR WISATA MILIKMU SENDIRI */
+            background-image: url('/static/assets/kotalama.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            /* Efek parallax saat discroll */
+            position: relative;
+            padding: 50px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Lapisan gelap transparan agar teks itinerary tetap terbaca di atas gambar */
+        .result-side::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .itinerary-wrapper {
+            position: relative;
+            /* Agar berada di atas lapisan gelap */
+            z-index: 1;
+            width: 100%;
+            max-width: 600px;
+            display: none;
+            /* Disembunyikan sampai tombol Generate diklik */
+        }
+
+        /* Gaya Kotak Jadwal (Timeline) */
+        .timeline-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            /* Putih sedikit transparan */
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            position: relative;
+            border-left: 5px solid var(--text-brown);
+        }
+
+        /* Garis penghubung antar kotak */
+        .timeline-connector {
+            position: absolute;
+            width: 2px;
+            height: 25px;
+            background-color: white;
+            left: 50%;
+            bottom: -25px;
+        }
+
+        /* Kotak Ringkasan Sisa Budget */
+        .summary-box {
+            background-color: var(--text-brown);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsif untuk layar kecil/HP */
+        @media (max-width: 992px) {
+            .split-container {
+                flex-direction: column;
+            }
+
+            .form-side,
+            .result-side {
+                width: 100%;
+            }
+
+            .result-side {
+                padding: 30px 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    {% include 'partisi/header.html' %}
+
+    <div class="split-container">
+
+        <div class="form-side">
+            <h2>Design Your<br>Perfect Escape</h2>
+            <p class="text-muted small mb-4">Set your parameters, and let our AI curate the ideal itinerary.</p>
+
+            <label class="form-label">City Destination</label>
+            <select id="inputKota" class="form-select">
+                <option value="" disabled selected>Select a city...</option>
+                <option value="Surabaya">Surabaya</option>
+                <option value="Jakarta">Jakarta</option>
+                <option value="Yogyakarta">Yogyakarta</option>
+                <option value="Bandung">Bandung</option>
+                <option value="Semarang">Semarang</option>
+            </select>
+
+            <label class="form-label">Travel Vibe (Optional)</label>
+            <select id="inputMood" class="form-select">
+                <option value="">Any Vibe</option>
+                <option value="Santai">Santai (Relaxing)</option>
+                <option value="Seru">Seru (Fun)</option>
+                <option value="Petualangan">Petualangan (Adventure)</option>
+                <option value="Edukasi">Edukasi (Educational)</option>
+            </select>
+
+            <label class="form-label">Max Budget (IDR)</label>
+            <input type="number" id="inputBudget" class="form-control" placeholder="e.g., 500000">
+
+            <label class="form-label">Available Time (Minutes)</label>
+            <input type="number" id="inputWaktu" class="form-control" placeholder="e.g., 360">
+
+            <label class="form-label">Number of Travelers</label>
+            <input type="number" id="inputPax" class="form-control" value="1" min="1">
+
+            <button class="btn-custom" onclick="buatJadwal()">Generate Itinerary</button>
+        </div>
+
+        <div class="result-side">
+            <div class="itinerary-wrapper" id="itineraryContainer">
+
+                <div class="summary-box">
+                    <h5 class="serif-font mb-3">Trip Summary</h5>
+                    <div class="d-flex justify-content-around">
+                        <div>
+                            <span class="small text-white-50 text-uppercase">Remaining Budget</span><br>
+                            <span class="fs-4 fw-bold" id="sisaBudget">-</span>
+                        </div>
+                        <div>
+                            <span class="small text-white-50 text-uppercase">Remaining Time</span><br>
+                            <span class="fs-4 fw-bold"><span id="sisaWaktu">-</span> Mins</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="timelineList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalMirip" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header" style="background-color: var(--accent-blue);">
+                    <h5 class="modal-title serif-font">✨ Similar to <span id="targetNamaTempat" class="fw-bold"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <p class="text-muted small mb-4">Alternatives based on content similarity (Category, Location,
+                        Mood).</p>
+                    <div class="row g-3" id="hasilMirip">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    {% include 'partisi/footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = "http://127.0.0.1:8001";
+
+        // Fungsi untuk memuat Header dan Footer dari folder partisi
+        async function loadSharedComponents() {
+            try {
+                // 1. Ambil dan pasang Header
+                const headerRes = await fetch('partisi/header.html');
+                document.getElementById('header-container').innerHTML = await headerRes.text();
+
+                // 2. Ambil dan pasang Footer
+                const footerRes = await fetch('partisi/footer.html');
+                document.getElementById('footer-container').innerHTML = await footerRes.text();
+
+                // 3. Logika Otomatis Menandai Menu yang Aktif (Underline & Bold)
+                const path = window.location.pathname;
+                let activeId = "nav-home"; // Default awal halaman home
+
+                if (path.includes("recommender.html")) activeId = "nav-plan";
+                else if (path.includes("dashboard.html")) activeId = "nav-analytics";
+
+                const activeEl = document.getElementById(activeId);
+                if (activeEl) {
+                    activeEl.classList.add("fw-bold");
+                    activeEl.style.textDecoration = "underline";
+                    activeEl.style.textUnderlineOffset = "5px";
+                }
+            } catch (error) {
+                console.error("Gagal memuat komponen partisi:", error);
+            }
+        }
+
+        async function buatJadwal() {
+            const kota = document.getElementById('inputKota').value;
+            const mood = document.getElementById('inputMood').value;
+            const budget = document.getElementById('inputBudget').value;
+            const waktu = document.getElementById('inputWaktu').value;
+            const pax = document.getElementById('inputPax').value;
+
+            if (!kota || !budget || !waktu || !pax) {
+                alert("Mohon isi Kota, Budget, Waktu, dan Jumlah Orang!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/itinerary?kota=${kota}&mood=${mood}&budget=${budget}&pax=${pax}&waktu=${waktu}`);
+
+                if (response.status === 404) {
+                    alert("Maaf, budget atau waktu terlalu kecil untuk kota ini.");
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Munculkan kontainer hasil di sisi kanan
+                document.getElementById('itineraryContainer').style.display = 'block';
+
+                // Isi Ringkasan
+                document.getElementById('sisaBudget').innerText = "Rp " + data.Ringkasan.Sisa_Budget_Rp.toLocaleString('id-ID');
+                document.getElementById('sisaWaktu').innerText = data.Ringkasan.Sisa_Waktu_Menit;
+
+                // Render Timeline (Kotak-kotak menurun)
+                const timeline = document.getElementById('timelineList');
+                timeline.innerHTML = "";
+
+                const totalItem = data.Rencana_Perjalanan.length;
+
+                data.Rencana_Perjalanan.forEach((item, index) => {
+                    // Jangan kasih garis penghubung di kotak paling terakhir
+                    const connector = (index < totalItem - 1) ? '<div class="timeline-connector"></div>' : '';
+
+                    timeline.innerHTML += `
+                        <div class="timeline-card">
+                            <h4 class="serif-font mb-1" style="color: var(--text-brown);">${item.Urutan}. ${item.Tempat}</h4>
+                            <span class="badge bg-dark mb-3">${item.Kategori}</span>
+                            <div class="d-flex justify-content-between text-muted small mb-3">
+                                <span>⏱️ Duration: <strong>${item.Durasi_Menit} Mins</strong></span>
+                                <span>💰 Cost: <strong>Rp ${item.Biaya_Rp.toLocaleString('id-ID')}</strong></span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-dark w-100" onclick="lihatMirip('${item.Tempat}')">Find Alternatives</button>
+                            ${connector}
+                        </div>
+                    `;
+                });
+
+            } catch (error) {
+                alert("Gagal terhubung ke server. Pastikan FastAPI berjalan.");
+                console.error(error);
+            }
+        }
+
+        async function lihatMirip(placeName) {
+            const modalElement = document.getElementById('modalMirip');
+            const modal = new bootstrap.Modal(modalElement);
+
+            document.getElementById('targetNamaTempat').innerText = placeName;
+            const container = document.getElementById('hasilMirip');
+            container.innerHTML = "<p class='text-center my-4'><em>Loading AI alternatives...</em></p>";
+
+            modal.show();
+
+            try {
+                const response = await fetch(`${API_URL}/similar/${placeName}?k=3`);
+                if (response.status === 404) throw new Error("Not found");
+
+                const data = await response.json();
+                container.innerHTML = "";
+
+                data.rekomendasi.forEach(place => {
+                    container.innerHTML += `
+                        <div class="col-md-4">
+                            <div class="card h-100 p-3 shadow-sm border-0" style="background-color: var(--bg-cream);">
+                                <h6 class="serif-font fw-bold">${place.Place_Name}</h6>
+                                <p class="small mb-1 text-muted">📍 ${place.City}</p>
+                                <span class="badge bg-dark mb-2" style="width: fit-content;">${place.Category}</span>
+                                <p class="small mb-0">⭐ ${place.Rating}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                container.innerHTML = `<p class="text-danger text-center my-4">Gagal mencari tempat serupa.</p>`;
+            }
+        }
+        window.onload = loadSharedComponents;
+    </script>
+</body>
+
+</html>

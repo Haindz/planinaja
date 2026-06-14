@@ -1,0 +1,36 @@
+<nav class="navbar navbar-expand-lg navbar-light shadow-sm sticky-top" style="background-color: var(--accent-blue);">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Planinaja</a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" id="nav-home" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" id="nav-plan" href="/recommender">Plan Trip</a></li>
+                <li class="nav-item"><a class="nav-link" id="nav-analytics" href="/dashboard">Analytics</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // 1. Ambil jalur URL yang sedang dibuka di browser saat ini
+    const path = window.location.pathname;
+    let activeId = "nav-home"; // Default awal ke menu Home
+    
+    // 2. Cocokkan URL dengan ID menu navbar
+    if (path === "/recommender" || path.includes("recommender")) {
+        activeId = "nav-plan";
+    } else if (path === "/dashboard" || path.includes("dashboard")) {
+        activeId = "nav-analytics";
+    }
+    
+    // 3. Berikan efek tebal dan garis bawah (underline) pada menu yang cocok
+    const activeEl = document.getElementById(activeId);
+    if (activeEl) {
+        activeEl.classList.add("fw-bold");
+        activeEl.style.textDecoration = "underline";
+        activeEl.style.textUnderlineOffset = "5px";
+    }
+</script>

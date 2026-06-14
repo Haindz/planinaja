@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planinaja - Rekomendasi Wisata</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    {% include 'partisi/header.html' %}
+
+    <div class="hero-container">
+        <div class="hero-text-side">
+            <h1 class="hero-title">Travel That<br>Renews the<br>World</h1>
+            <div class="mt-auto">
+                <div style="font-size: 2.5rem; margin-bottom: 15px;">🗺️</div>
+                <p style="font-size: 1.1rem; max-width: 80%;">
+                    Discover bespoke journeys that honor the planet and its people.
+                </p>
+                <a href="/recommender" class="btn-custom-link">Plan Your Journey</a>
+            </div>
+        </div>
+        <div class="hero-image-side"></div>
+    </div>
+
+    <div class="section-popular" id="destinations">
+        <div class="section-header">
+            <h2 class="section-title">Trending<br>Escapes</h2>
+            <p class="section-subtitle">Explore our handpicked collection of popular destinations across Indonesia.</p>
+        </div>
+
+        <div id="dynamicPopularList">
+            <p class="text-center my-5"><em>Memuat destinasi populer dari sistem AI...</em></p>
+        </div>
+    </div>
+
+    {% include 'partisi/footer.html' %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8001";
+
+        const kamusGambar = {
+            "Wisata Kuliner Pecenongan": "/assets/Pecenongan.jpg",
+            "Desa Wisata Sungai Code Jogja Kota": "/assets/sungaicode.jpg",
+            "Freedom Library": "/assets/freedomlib.jpg",
+            "Kota Lama Semarang": "/assets/kotalama.jpg"
+        };
+
+        const gambarDefault = "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80";
+
+        async function loadPopular() {
+            try {
+                const response = await fetch(`${API_URL}/popular?top_n=3`);
+                const data = await response.json();
+
+                const container = document.getElementById('dynamicPopularList');
+                container.innerHTML = "";
+
+                data.rekomendasi.forEach((place, index) => {
+                    const imgSrc = kamusGambar[place.Place_Name] || gambarDefault;
+                    const boxPosition = index % 2 !== 0 ? 'left' : '';
+
+                    container.innerHTML += `
+                        <div class="destination-card">
+                            <img src="${imgSrc}" alt="${place.Place_Name}" class="destination-img shadow-sm">
+                            <div class="destination-info-box ${boxPosition}">
+                                <h3 class="destination-title serif-font">${place.Place_Name}</h3>
+                                <p class="mb-2"><strong>📍 ${place.City}</strong></p>
+                                <p class="small mb-3 text-muted">Kategori: ${place.Category}</p>
+                                <p style="font-size: 0.95rem;">Immerse yourself in this stunning destination. Highly rated (⭐ ${place.Rating}) by ${place.Jumlah_Ulasan} travelers.</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("Gagal memuat wisata populer:", error);
+                document.getElementById('dynamicPopularList').innerHTML = "<p class='text-danger'>Gagal memuat data dari server.</p>";
+            }
+        }
+
+        window.onload = loadPopular;
+    </script>
+</body>
+
+</html>

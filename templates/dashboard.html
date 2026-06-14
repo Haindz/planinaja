@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Planinaja</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background-color: var(--bg-cream);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            padding: 8px 30px !important;
+        }
+
+        .dashboard-main {
+            flex-grow: 1;
+            padding: 20px 30px 40px;
+        }
+
+        .dashboard-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--text-brown);
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+
+        .panel-box {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .scorecard {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .scorecard-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .scorecard-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--text-brown);
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .chart-box {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 1 / 1;
+        }
+
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            text-align: center;
+            color: var(--text-brown);
+            margin-bottom: 15px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        .chart-wrapper canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Tabel CSS */
+        .table-panel {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-relative-wrapper {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        .table-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow-y: auto;
+            padding: 0 15px 15px;
+        }
+
+        .table-container thead th {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 1;
+            border-bottom: 2px solid var(--text-brown);
+            font-size: 0.85rem;
+            color: var(--text-brown);
+        }
+
+        .table-container td {
+            font-size: 0.85rem;
+            vertical-align: middle;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #dcdcdc;
+            border-radius: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-brown);
+        }
+    </style>
+</head>
+
+<body>
+
+    {% include 'partisi/header.html' %}
+
+    <div class="dashboard-main container-fluid px-lg-5">
+        <h1 class="dashboard-title">Dashboard Analytics Planinaja</h1>
+        <div id="loadingState" class="text-center mt-5">
+            <h5 class="text-muted"><em>Menarik data...</em></h5>
+        </div>
+
+        <div id="dashboardContent" class="d-none d-flex flex-column gap-4">
+
+            <div class="d-flex flex-wrap gap-3">
+                <div class="panel-box scorecard">
+                    <div class="scorecard-title">Total Destinations</div>
+                    <div class="scorecard-value" id="scTotal">-</div>
+                </div>
+                <div class="panel-box scorecard">
+                    <div class="scorecard-title">Average Rating</div>
+                    <div class="scorecard-value" id="scRating">-</div>
+                </div>
+                <div class="panel-box scorecard">
+                    <div class="scorecard-title">Highest Ticket Price</div>
+                    <div class="scorecard-value" id="scPrice">-</div>
+                </div>
+                <div class="panel-box scorecard">
+                    <div class="scorecard-title">Avg. Visit Duration</div>
+                    <div class="scorecard-value" id="scTime">-</div>
+                </div>
+                <div class="panel-box scorecard">
+                    <div class="scorecard-title">Max Reviews Count</div>
+                    <div class="scorecard-value" id="scReview">-</div>
+                </div>
+            </div>
+
+            <div class="row g-4 align-items-stretch">
+                <div class="col-lg-8">
+                    <div class="row g-4">
+                        <!-- Chart 1: Bar -->
+                        <div class="col-md-6">
+                            <div class="panel-box chart-box">
+                                <div class="chart-title">Destinations by City</div>
+                                <div class="chart-wrapper"><canvas id="barChart"></canvas></div>
+                            </div>
+                        </div>
+                        <!-- Chart 2: Pie -->
+                        <div class="col-md-6">
+                            <div class="panel-box chart-box">
+                                <div class="chart-title">Category Split</div>
+                                <div class="chart-wrapper"><canvas id="pieChart"></canvas></div>
+                            </div>
+                        </div>
+                        <!-- Chart 3: Radar -->
+                        <div class="col-md-6">
+                            <div class="panel-box chart-box">
+                                <div class="chart-title">Average Rating by Category</div>
+                                <div class="chart-wrapper"><canvas id="radarChart"></canvas></div>
+                            </div>
+                        </div>
+                        <!-- Chart 4: Top 10 (BARU) -->
+                        <div class="col-md-6">
+                            <div class="panel-box chart-box">
+                                <!-- Header dengan Dropdown Filter -->
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="chart-title mb-0" style="font-size: 1rem;">Top 10 Rated Places</div>
+                                    <select id="chartCityFilter" class="form-select form-select-sm w-auto shadow-sm"
+                                        onchange="filterTopChart()">
+                                        <option value="All">All Cities</option>
+                                        <option value="Jakarta">Jakarta</option>
+                                        <option value="Surabaya">Surabaya</option>
+                                        <option value="Yogyakarta">Yogyakarta</option>
+                                        <option value="Bandung">Bandung</option>
+                                        <option value="Semarang">Semarang</option>
+                                    </select>
+                                </div>
+                                <div class="chart-wrapper"><canvas id="topChart"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kolom Kanan Tabel -->
+                <div class="col-lg-4">
+                    <div class="panel-box table-panel">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light"
+                            style="border-radius: 10px 10px 0 0;">
+                            <span class="fw-bold"
+                                style="font-family: 'Playfair Display', serif; color: var(--text-brown);">Destination
+                                Prices</span>
+                            <select id="cityFilter" class="form-select form-select-sm w-auto shadow-sm"
+                                onchange="filterTable()">
+                                <option value="All">All Cities</option>
+                                <option value="Jakarta">Jakarta</option>
+                                <option value="Surabaya">Surabaya</option>
+                                <option value="Yogyakarta">Yogyakarta</option>
+                                <option value="Bandung">Bandung</option>
+                                <option value="Semarang">Semarang</option>
+                            </select>
+                        </div>
+
+                        <div class="table-relative-wrapper mt-2">
+                            <div class="table-container">
+                                <table class="table table-hover table-borderless">
+                                    <thead>
+                                        <tr>
+                                            <th>Place Name</th>
+                                            <th class="text-end">Ticket Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {% include 'partisi/footer.html' %}
+
+    <script>
+        const API_URL = "http://127.0.0.1:8001";
+        const themeBrown = '#4A3B32';
+        const themeGold = '#B59575';
+        const themeGreen = '#7D8C74';
+
+        let allTableData = [];
+        let topChartInstance = null; // Menyimpan grafik Top 10
+
+        async function initDashboard() {
+            await loadSharedComponents();
+            try {
+                const response = await fetch(`${API_URL}/analytics`);
+                if (!response.ok) throw new Error("Gagal");
+                const data = await response.json();
+
+                document.getElementById('loadingState').classList.add('d-none');
+                document.getElementById('dashboardContent').classList.remove('d-none');
+
+                document.getElementById('scTotal').innerText = data.summary.total;
+                document.getElementById('scRating').innerText = data.summary.avg_rating + " ⭐";
+                document.getElementById('scPrice').innerText = "Rp " + (data.summary.max_price / 1000) + "K";
+                document.getElementById('scTime').innerText = data.summary.avg_time + " Min";
+                document.getElementById('scReview').innerText = data.summary.max_reviews;
+
+                allTableData = data.table_data;
+
+                // Panggil render awal untuk Tabel dan Grafik Top 10
+                filterTable();
+                initTopChart();
+
+                const commonOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+
+                new Chart(document.getElementById('barChart'), {
+                    type: 'bar',
+                    data: { labels: Object.keys(data.city_distribution), datasets: [{ data: Object.values(data.city_distribution), backgroundColor: themeBrown, borderRadius: 4 }] },
+                    options: commonOpt
+                });
+
+                new Chart(document.getElementById('pieChart'), {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(data.category_distribution), datasets: [{ data: Object.values(data.category_distribution), backgroundColor: [themeBrown, themeGold, themeGreen, '#A3B1C6', '#D1C8C1', '#8C7A6B'], borderWidth: 0 }] },
+                    options: { ...commonOpt, cutout: '65%', plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+                });
+
+                new Chart(document.getElementById('radarChart'), {
+                    type: 'radar',
+                    data: { labels: Object.keys(data.category_ratings), datasets: [{ data: Object.values(data.category_ratings), backgroundColor: 'rgba(74, 59, 50, 0.2)', borderColor: themeBrown, pointBackgroundColor: themeGold }] },
+                    options: { ...commonOpt, scales: { r: { suggestedMin: 3.5, suggestedMax: 5, ticks: { display: false } } } }
+                });
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loadingState').innerHTML = `<h5 class="text-danger mt-5">Gagal terhubung ke API!</h5>`;
+            }
+        }
+
+        // Fungsi untuk memuat Header dan Footer dari folder partisi
+        async function loadSharedComponents() {
+            try {
+                // 1. Ambil dan pasang Header
+                const headerRes = await fetch('partisi/header.html');
+                document.getElementById('header-container').innerHTML = await headerRes.text();
+
+                // 2. Ambil dan pasang Footer
+                const footerRes = await fetch('partisi/footer.html');
+                document.getElementById('footer-container').innerHTML = await footerRes.text();
+
+                // 3. Logika Otomatis Menandai Menu yang Aktif (Underline & Bold)
+                const path = window.location.pathname;
+                let activeId = "nav-home"; // Default awal halaman home
+
+                if (path.includes("recommender.html")) activeId = "nav-plan";
+                else if (path.includes("dashboard.html")) activeId = "nav-analytics";
+
+                const activeEl = document.getElementById(activeId);
+                if (activeEl) {
+                    activeEl.classList.add("fw-bold");
+                    activeEl.style.textDecoration = "underline";
+                    activeEl.style.textUnderlineOffset = "5px";
+                }
+            } catch (error) {
+                console.error("Gagal memuat komponen partisi:", error);
+            }
+        }
+
+        // --- FUNGSI UNTUK TABEL (TETAP SAMA) ---
+        function filterTable() {
+            const selectedCity = document.getElementById('cityFilter').value;
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            const filteredData = selectedCity === "All" ? allTableData : allTableData.filter(item => item.City === selectedCity);
+
+            filteredData.forEach(item => {
+                const harga = item.Price === 0 ? "Gratis" : "Rp " + item.Price.toLocaleString('id-ID');
+                tbody.innerHTML += `<tr><td class="fw-semibold text-dark">${item.Place_Name}</td><td class="text-end text-muted">${harga}</td></tr>`;
+            });
+        }
+
+        // --- FUNGSI BARU UNTUK GRAFIK TOP 10 ---
+        function initTopChart() {
+            const ctx = document.getElementById('topChart').getContext('2d');
+            topChartInstance = new Chart(ctx, {
+                type: 'bar', // Kita pakai Bar Horizontal agar nama tempat yang panjang bisa terbaca
+                data: { labels: [], datasets: [] },
+                options: {
+                    indexAxis: 'y', // Memutar grafik menjadi horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { suggestedMin: 4.0, suggestedMax: 5.0 }, // Rating rentang 4-5
+                        y: { ticks: { font: { size: 9 } } } // Mengecilkan font nama tempat
+                    }
+                }
+            });
+            filterTopChart(); // Muat data pertama kali
+        }
+
+        function filterTopChart() {
+            const selectedCity = document.getElementById('chartCityFilter').value;
+
+            // 1. Saring data berdasarkan kota
+            let filteredData = selectedCity === "All" ? allTableData : allTableData.filter(item => item.City === selectedCity);
+
+            // 2. Urutkan berdasarkan Rating tertinggi (Descending)
+            filteredData.sort((a, b) => b.Rating - a.Rating);
+
+            // 3. Ambil hanya 10 teratas
+            const top10 = filteredData.slice(0, 10);
+
+            // 4. Masukkan ke dalam grafik
+            topChartInstance.data.labels = top10.map(item => item.Place_Name);
+            topChartInstance.data.datasets = [{
+                data: top10.map(item => item.Rating),
+                backgroundColor: themeGold,
+                borderRadius: 4
+            }];
+
+            topChartInstance.update(); // Render ulang grafik
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+
+</html>
