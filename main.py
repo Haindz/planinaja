@@ -35,51 +35,48 @@ templates = Jinja2Templates(directory=".")
 tourism_id = pd.read_csv('datasets/tourism_with_id.csv')
 # (Pastikan dataset lain seperti rating dll juga diubah path-nya menjadi 'datasets/...')
 
-@app.on_event("startup")
-def load_and_prepare_data():
-    global tourism_id, cosine_sim
-    print("Memuat dataset dan merakit algoritma... Mohon tunggu.")
+print("Memuat dataset dan merakit algoritma... Mohon tunggu.")
 
-    # 1. Load Data
-    t_id = pd.read_csv('datasets/tourism_with_id.csv')
-    rating = pd.read_csv('datasets/tourism_rating.csv')
+# 1. Load Data
+t_id = pd.read_csv('datasets/tourism_with_id.csv')
+rating = pd.read_csv('datasets/tourism_rating.csv')
 
-    # 2. Data Cleaning
-    t_id = t_id.drop(['Unnamed: 11', 'Unnamed: 12'], axis=1, errors='ignore')
-    t_id['Time_Minutes'] = t_id['Time_Minutes'].fillna(t_id['Time_Minutes'].median())
+# 2. Data Cleaning
+t_id = t_id.drop(['Unnamed: 11', 'Unnamed: 12'], axis=1, errors='ignore')
+t_id['Time_Minutes'] = t_id['Time_Minutes'].fillna(t_id['Time_Minutes'].median())
 
-    # 3. Feature Engineering: Mood
-    def tentukan_mood(kategori):
-        if kategori == 'Bahari': return 'Santai, Alam'
-        elif kategori == 'Budaya': return 'Edukasi, Tenang'
-        elif kategori == 'Taman Hiburan': return 'Seru, Keluarga'
-        elif kategori == 'Cagar Alam': return 'Petualangan, Alam'
-        elif kategori == 'Pusat Perbelanjaan': return 'Santai, Belanja'
-        elif kategori == 'Tempat Ibadah': return 'Tenang, Religi'
-        else: return 'Umum'
-    
-    t_id['Mood'] = t_id['Category'].apply(tentukan_mood)
-    t_id['Tags'] = t_id['Category'] + " " + t_id['City'] + " " + t_id['Mood']
+# 3. Feature Engineering: Mood
+def tentukan_mood(kategori):
+    if kategori == 'Bahari': return 'Santai, Alam'
+    elif kategori == 'Budaya': return 'Edukasi, Tenang'
+    elif kategori == 'Taman Hiburan': return 'Seru, Keluarga'
+    elif kategori == 'Cagar Alam': return 'Petualangan, Alam'
+    elif kategori == 'Pusat Perbelanjaan': return 'Santai, Belanja'
+    elif kategori == 'Tempat Ibadah': return 'Tenang, Religi'
+    else: return 'Umum'
 
-    # 4. Feature Engineering: Popularity (Weighted Rating)
-    jumlah_review = rating.groupby('Place_Id').size().reset_index(name='Jumlah_Ulasan')
-    t_id = pd.merge(t_id, jumlah_review, on='Place_Id', how='left')
-    t_id['Jumlah_Ulasan'] = t_id['Jumlah_Ulasan'].fillna(0)
-    
-    v = t_id['Jumlah_Ulasan']
-    R = t_id['Rating']
-    C = t_id['Rating'].mean()
-    m = t_id['Jumlah_Ulasan'].quantile(0.75)
-    t_id['Skor_Popularitas'] = ((v / (v + m)) * R) + ((m / (v + m)) * C)
+t_id['Mood'] = t_id['Category'].apply(tentukan_mood)
+t_id['Tags'] = t_id['Category'] + " " + t_id['City'] + " " + t_id['Mood']
 
-    # 5. Algoritma Content-Based (TF-IDF)
-    tfidf = TfidfVectorizer()
-    tfidf_matrix = tfidf.fit_transform(t_id['Tags'])
-    cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+# 4. Feature Engineering: Popularity (Weighted Rating)
+jumlah_review = rating.groupby('Place_Id').size().reset_index(name='Jumlah_Ulasan')
+t_id = pd.merge(t_id, jumlah_review, on='Place_Id', how='left')
+t_id['Jumlah_Ulasan'] = t_id['Jumlah_Ulasan'].fillna(0)
 
-    # Simpan ke variabel global
-    tourism_id = t_id
-    print("Mesin Rekomendasi Siap Digunakan!")
+v = t_id['Jumlah_Ulasan']
+R = t_id['Rating']
+C = t_id['Rating'].mean()
+m = t_id['Jumlah_Ulasan'].quantile(0.75)
+t_id['Skor_Popularitas'] = ((v / (v + m)) * R) + ((m / (v + m)) * C)
+
+# 5. Algoritma Content-Based (TF-IDF)
+tfidf = TfidfVectorizer()
+tfidf_matrix = tfidf.fit_transform(t_id['Tags'])
+cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+
+# Simpan ke variabel global
+tourism_id = t_id
+print("Mesin Rekomendasi Siap Digunakan!")
 
 # --- ROUTING HALAMAN WEB ---
 @app.get("/")
